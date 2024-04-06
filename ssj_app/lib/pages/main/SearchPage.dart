@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ssj/classes.dart'; // Make sure this import points to where AppText is defined
 import 'dart:developer' as d;
+import 'package:ssj/pages/main/findTripPage.dart';
 
 
 class SearchRoute extends StatefulWidget {
@@ -24,7 +25,7 @@ class _SearchRouteState extends State<SearchRoute> {
   List<List<double>> StationCoordinates = [];
 
   void changingStation(bool isFrom) async {
-    final userData = await getNewPlace(context);
+    final userData = await getNewDestPage(context);
     if (userData != null) {
       setState(() {
         if (isFrom) fromDest = userData; 
@@ -59,10 +60,14 @@ class _SearchRouteState extends State<SearchRoute> {
   }
 
   showContinueButton() {
+    // This function should return a FloatingActionButton that navigates to the FindRidePage
+    // when pressed. The button should only be shown if both fromDest and toDest are set to a station
+
     if (fromDest['city'] != 'Choose a station' && toDest['city'] != 'Choose a station') {
       return FloatingActionButton.extended(
         onPressed: () {
           d.log('Continue button pressed');
+          goToFindRoutePage(context);
         },
         icon: Icon(
               Icons.arrow_forward,
@@ -84,12 +89,15 @@ class _SearchRouteState extends State<SearchRoute> {
   }
 
   showMap() {
+    // This function should return a map widget that shows the route between the two stations
+    // The map should only be shown if both fromDest and toDest are set to a station
+    
     d.log('Can show map: $canShowMap');
     if (canShowMap) {
       d.log('Updating map');
       return Container(
-        width: MediaQuery.of(context).size.width * 0.7,
-        height: MediaQuery.of(context).size.width * 0.7,
+        width: MediaQuery.of(context).size.width * 0.74,
+        height: MediaQuery.of(context).size.width * 0.74,
         child: ShowCaseStartEndMap(
           start: fromDest['coordinates'], 
           end: toDest['coordinates']
@@ -114,23 +122,51 @@ class _SearchRouteState extends State<SearchRoute> {
             ],
           ),
 
-          SizedBox(height: 40),
-
-          InkWell(
-            child: DestPlace("From:", fromDest['city']),
-            onTap: () {
-              changingStation(true);
-            },
-          ),
-
           SizedBox(height: 20),
-          
-          InkWell(
-            child: DestPlace("to:", toDest['city']),
-            onTap: () {
-              changingStation(false);
-            },
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(width: 20),
+              Column(
+                children: [
+                  InkWell(
+                    child: DestPlace("From:", fromDest['city']),
+                    onTap: () {
+                      changingStation(true);
+                    },
+                  ),
+
+                  SizedBox(height: 20),
+                  
+                  InkWell(
+                    child: DestPlace("to:", toDest['city']),
+                    onTap: () {
+                      changingStation(false);
+                    },
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => setState(() {
+                  var temp = fromDest;
+                  fromDest = toDest;
+                  toDest = temp;
+
+                  canShowMap = false;
+                  if (fromDest['city'] != 'Choose a station' && toDest['city'] != 'Choose a station'){
+                    canShowMap = true;
+                  }
+                }),
+                child: Icon(
+                  Icons.swap_vert_sharp,
+                  size: 40,
+                ),
+              )
+            ],
           ),
+
+
           SizedBox(height: 20), // Add some space between the destination and the map
           
           showMap()
@@ -150,7 +186,7 @@ class DestPlace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
+      width: MediaQuery.of(context).size.width * 0.825,
       padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -182,13 +218,32 @@ class DestPlace extends StatelessWidget {
   }
 }
 
-// Function to navigate to the SelectStationPage and rerturn the selected station
-Future<dynamic> getNewPlace(BuildContext context) {
+Future<dynamic> getNewDestPage(BuildContext context) {
   return Navigator.of(context).push(
     PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => const SelectStationPage(),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.ease;
+
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    )
+  );
+}
+
+Future<dynamic> goToFindRoutePage(BuildContext context) {
+  return Navigator.of(context).push(
+    PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => const FindRidePage(),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         const curve = Curves.ease;
 

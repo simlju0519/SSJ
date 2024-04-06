@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as dev;
 import 'dart:math' as math;
-
-
+import 'package:image/image.dart' as img;
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:typed_data';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class AppText extends StatelessWidget {
@@ -123,14 +124,17 @@ class ShowCaseStartEndMap extends StatefulWidget {
 
 class _ShowCaseStartEndMapState extends State<ShowCaseStartEndMap> {
   GoogleMapController? _googleMapController;
-  late Marker _startMarker;
-  late Marker _endMarker;
-  late Polyline _polyline;
+  final Map<String, Marker> _markers = {};
+
+  LatLng _oldStart = LatLng(0, 0);
+  LatLng _oldEnd = LatLng(0, 0);
+
+  late Polyline _polyline = Polyline(polylineId: PolylineId('path'));
 
   @override
   void initState() {
     super.initState();
-    setCoordinates();
+    setMarkers();
   }
 
   @override
@@ -139,33 +143,48 @@ class _ShowCaseStartEndMapState extends State<ShowCaseStartEndMap> {
     super.dispose();
   }
 
-  void setCoordinates() {
-    BitmapDescriptor startIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
-    BitmapDescriptor endIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+  Future<BitmapDescriptor> getMarkerIcon(String path) async {
+    ByteData byteData = await rootBundle.load(path);
+    List<int> bytes = byteData.buffer.asUint8List();
+    img.Image? image = img.decodeImage(Uint8List.fromList(bytes));
 
-    setState(() {
-      _startMarker = Marker(
-        markerId: MarkerId('start'),
-        icon: startIcon,
-        position: LatLng(widget.start[0], widget.start[1]),
-        infoWindow: InfoWindow(title: 'Start', snippet: 'Start Position'),
-      );
-      _endMarker = Marker(
-        markerId: MarkerId('end'),
-        icon: endIcon,
-        position: LatLng(widget.end[0], widget.end[1]),
-        infoWindow: InfoWindow(title: 'End', snippet: 'End Position'),
-      );
-      _polyline = Polyline(
-        polylineId: PolylineId('path'),
-        color: Colors.purple,
-        width: 8,
-        points: [
-          LatLng(widget.start[0], widget.start[1]),
-          LatLng(widget.end[0], widget.end[1]),
-        ],
-      );
-    });
+    // Resize the image
+    img.Image resizedImage = img.copyResize(image!, width: 100, height: 100); // Set the width and height to the desired size
+
+    // Convert the image to bytes
+    List<int> resizedBytes = img.encodePng(resizedImage);
+    Uint8List resizedUint8List = Uint8List.fromList(resizedBytes);
+
+    // Create the bitmap descriptor from the bytes
+    return BitmapDescriptor.fromBytes(resizedUint8List);
+  }
+
+  void setMarkers() async{
+    _markers['start'] = Marker(
+      markerId: MarkerId('start'),
+      position: LatLng(widget.start[0], widget.start[1]),
+      icon: await getMarkerIcon('assets/startIcon.png'),
+      anchor: Offset(0.5, 0.5),
+    );
+    _markers['end'] = Marker(
+      markerId: MarkerId('end'),
+      position: LatLng(widget.end[0], widget.end[1]),
+      icon: await getMarkerIcon('assets/endIcon.png'),
+      anchor: Offset(0.5, 0.5),
+    );
+
+    _polyline = Polyline(
+      polylineId: PolylineId('path'),
+      color: Colors.purple,
+      width: 8,
+      points: [
+        LatLng(widget.start[0], widget.start[1]),
+        LatLng(widget.end[0], widget.end[1]),
+      ],
+    );
+    _oldStart = LatLng(widget.start[0], widget.start[1]);
+    _oldEnd = LatLng(widget.end[0], widget.end[1]);
+    setState(() {});
   }
 
   void onMapCreated(GoogleMapController controller) {
@@ -196,8 +215,11 @@ class _ShowCaseStartEndMapState extends State<ShowCaseStartEndMap> {
     dev.log('Building map');
     dev.log(widget.start.toString());
     dev.log(widget.end.toString());
-    adjustCamera();
-    setCoordinates();
+
+    if (_oldStart != LatLng(widget.start[0], widget.start[1]) || _oldEnd != LatLng(widget.end[0], widget.end[1])){
+      adjustCamera();
+      setMarkers();
+    }
     return Scaffold(
       body: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -211,7 +233,7 @@ class _ShowCaseStartEndMapState extends State<ShowCaseStartEndMap> {
           mapToolbarEnabled: true,
           zoomControlsEnabled: false,
           mapType: MapType.normal,
-          markers: {_startMarker, _endMarker},
+          markers: _markers.values.toSet(),
           polylines: {_polyline},
         ),
       ),

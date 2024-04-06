@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ssj/classes.dart';
 import 'package:ssj/pages/main/mainMainPage.dart';
 import 'package:ssj/pages/main/SearchPage.dart';
+import 'package:ssj/pages/main/findTripPage.dart';
+
 
 class MainPageMang extends StatefulWidget {
   GlobalKey <NavigatorState> navKey;
@@ -20,6 +22,8 @@ class _MainPageMangState extends State<MainPageMang> {
       routes: {
         'home': (context) => MainPage(),
         'search': (context) => SearchRoute(),
+        'find': (context) => FindRidePage(),
+
       },
       navigatorKey: widget.navKey,
     );
