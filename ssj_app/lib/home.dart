@@ -78,7 +78,6 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
                   _tabTitles[_currentIndex], 
                   fontSize: 30,
                   blurRadius: 2,
-                  canPop: false,
                 ),
               ),
             ), // Ensure AppText accepts fontSize

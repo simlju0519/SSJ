@@ -1,5 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:ssj/classes.dart'; // Make sure this import points to where AppText is defined
+import 'dart:developer' as d;
+
 
 class SearchRoute extends StatefulWidget {
   const SearchRoute({super.key});
@@ -9,9 +13,91 @@ class SearchRoute extends StatefulWidget {
 }
 
 class _SearchRouteState extends State<SearchRoute> {
-  String fromName = 'Choose a station';
-  String toName = 'Choose a station';
+  Map fromDest = {'city': 'Choose a station', 'coordinates': [0.0, 0.0]};
+  Map toDest = {'city': 'Choose a station', 'coordinates': [0.0, 0.0]};
 
+  Map oldFromDest = {'city': 'Choose a station', 'coordinates': [0.0, 0.0]};
+  Map oldToDest = {'city': 'Choose a station', 'coordinates': [0.0, 0.0]};
+
+  bool canShowMap = false;
+
+  List<List<double>> StationCoordinates = [];
+
+  void changingStation(bool isFrom) async {
+    final userData = await getNewPlace(context);
+    if (userData != null) {
+      setState(() {
+        if (isFrom) fromDest = userData; 
+        else toDest = userData;
+      });
+      print('Selected station: ${userData}');
+      
+      if (fromDest['city'] != 'Choose a station' && toDest['city'] != 'Choose a station') {
+        if (fromDest != oldFromDest || toDest != oldToDest) {
+          oldFromDest = fromDest;
+          oldToDest = toDest;
+          setState(() {
+            canShowMap = false;
+          });
+          d.log('Getting coordinates');
+        }
+        setState(() {
+          canShowMap = true;
+        });
+      }
+    }
+  }
+
+  getDataCoodinates() {
+    // Get the coordinates of the stations
+    // This function is not implemented in this example
+    // It should return the coordinates of the stations
+    // that are selected in the fromName and toName variables
+
+    // Example:
+    StationCoordinates = [[56.166497, 15.585361], [57.7091812, 11.9730036]];
+  }
+
+  showContinueButton() {
+    if (fromDest['city'] != 'Choose a station' && toDest['city'] != 'Choose a station') {
+      return FloatingActionButton.extended(
+        onPressed: () {
+          d.log('Continue button pressed');
+        },
+        icon: Icon(
+              Icons.arrow_forward,
+              size: 30,
+            ),
+        label: CommonTextApp(
+              text: 'Continue',
+              isBold: true,
+              fontSize: 25,
+        )
+      );
+    }
+    return null;
+  }
+
+  void initState() {
+    super.initState();
+    // getDataCoodinates();
+  }
+
+  showMap() {
+    d.log('Can show map: $canShowMap');
+    if (canShowMap) {
+      d.log('Updating map');
+      return Container(
+        width: MediaQuery.of(context).size.width * 0.7,
+        height: MediaQuery.of(context).size.width * 0.7,
+        child: ShowCaseStartEndMap(
+          start: fromDest['coordinates'], 
+          end: toDest['coordinates']
+        ),
+      );
+    }
+    return Container();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,22 +117,27 @@ class _SearchRouteState extends State<SearchRoute> {
           SizedBox(height: 40),
 
           InkWell(
-            child: DestPlace("From:", fromName),
+            child: DestPlace("From:", fromDest['city']),
             onTap: () {
-              getNewPlace(context);
+              changingStation(true);
             },
           ),
 
           SizedBox(height: 20),
           
           InkWell(
-            child: DestPlace("to:", toName),
+            child: DestPlace("to:", toDest['city']),
             onTap: () {
-              getNewPlace(context);
+              changingStation(false);
             },
           ),
+          SizedBox(height: 20), // Add some space between the destination and the map
+          
+          showMap()
         ],
       ),
+      floatingActionButton: showContinueButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
@@ -76,25 +167,14 @@ class DestPlace extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            labelDestination,
-            textAlign: TextAlign.center, // Ensure the text is centered within the container
-            style: TextStyle(
-              fontSize: 20,
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          Text(
-            StationName,
-            textAlign: TextAlign.center, // Ensure the text is centered within the container
-            style: TextStyle(
-              fontSize: 20,
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+          CommonTextApp(
+            text: labelDestination,
+            fontSize: 20,
+            isBold: true,
+          ), // Use the CommonTextApp widget to create the label (From: or To:
+          CommonTextApp(
+            text: StationName,
+            fontSize: 20,
           ),
         ],
       ),
@@ -102,8 +182,9 @@ class DestPlace extends StatelessWidget {
   }
 }
 
-void getNewPlace(BuildContext context) {
-  Navigator.of(context).push(
+// Function to navigate to the SelectStationPage and rerturn the selected station
+Future<dynamic> getNewPlace(BuildContext context) {
+  return Navigator.of(context).push(
     PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => const SelectStationPage(),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -131,44 +212,203 @@ class SelectStationPage extends StatefulWidget {
 }
 
 class _SelectStationPageState extends State<SelectStationPage> {
+
+  List<Map> showingStations = [];
+  List<Map> allStations = [];
+  
+
+  void getData() {
+    List<Map> gatheredTestData = [
+      {
+        'stationName' : 'Göteborgs Central Station', 
+        'CityName': 'Gothenburg',
+        'Coordinates': [57.7091812, 11.9730036],
+      },
+      {
+        'stationName' : 'Stockholms Central Station',
+        'CityName': 'Stockholm',
+        'Coordinates': [59.3306501, 18.0595811],
+      },
+      {
+        'stationName' : 'Malmö Central Station',
+        'CityName': 'Malmö',
+        'Coordinates': [55.6092245, 13.0004857],
+      },
+      {
+        'stationName' : 'Lund Central Station',
+        'CityName': 'Lund',
+        'Coordinates': [55.7046602, 13.1910078],
+      },
+      {
+        'stationName' : 'Helsingborg Central Station',
+        'CityName': 'Helsingborg',
+        'Coordinates': [56.046467, 12.694496],
+      },
+      {
+        'stationName': 'Uppsala Central Station',
+        'CityName': 'Uppsala',
+        'Coordinates': [59.8585626, 17.6389275],
+      },
+      {
+        'stationName': 'Västerås Central Station',
+        'CityName': 'Västerås',
+        'Coordinates': [59.609521, 16.545587],
+      },
+      {
+        'stationName': 'Örebro Central Station',
+        'CityName': 'Örebro',
+        'Coordinates': [59.274337, 15.206608],
+      },
+      {
+        'stationName': 'Linköping Central Station',
+        'CityName': 'Linköping',
+        'Coordinates': [58.410807, 15.621372],
+      },
+      {
+        'stationName': 'Norrköping Central Station',
+        'CityName': 'Norrköping',
+        'Coordinates': [58.594241, 16.187622],
+      },
+      {
+        'stationName': 'Jönköping Central Station',
+        'CityName': 'Jönköping',
+        'Coordinates': [57.782613, 14.161911],
+      },
+      {
+        'stationName': 'Växjö Central Station',
+        'CityName': 'Växjö',
+        'Coordinates': [56.878718, 14.809431],
+      },
+      {
+        'stationName': 'Kalmar Central Station',
+        'CityName': 'Kalmar',
+        'Coordinates': [56.663588, 16.356779],
+      },
+      {
+        'stationName': 'Karlskrona Central Station',
+        'CityName': 'Karlskrona',
+        'Coordinates': [56.161678, 15.586604],
+      },
+      {
+        'stationName': 'Halmstad Central Station',
+        'CityName': 'Halmstad',
+        'Coordinates': [56.6745, 12.8562],
+      },
+      {
+        'stationName': 'Gävle Central Station',
+        'CityName': 'Gävle',
+        'Coordinates': [60.6745, 17.1412],
+      },
+      {
+        'stationName': 'Borås Central Station',
+        'CityName': 'Borås',
+        'Coordinates': [57.7210, 12.9401],
+      },
+    ];
+
+    for (var i = 0; i < gatheredTestData.length; i++) {
+      allStations.add({
+        'name': gatheredTestData[i]['stationName'],
+        'city': gatheredTestData[i]['CityName'],
+        'coordinates': gatheredTestData[i]['Coordinates'],
+      });
+      
+      // Copy all stations to showingStations
+      showingStations = List.from(allStations);
+    }
+  }
+
+  void updateStationsFromSearch(String search) {
+
+    List<Map> newStations = [];
+    if (search.isEmpty) {
+      newStations = List.from(allStations);
+    }
+    else{
+      for (var i = 0; i < allStations.length; i++) {
+        if (allStations[i]['name'].toString().toLowerCase().contains(search) || allStations[i]['city'].toString().toLowerCase().contains(search)) {
+          newStations.add(allStations[i]);
+        }
+      }
+    }
+    setState(() {
+      showingStations = newStations;
+    });
+  }
+
+  void initState() {
+    super.initState();
+    getData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 120),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              SizedBox(width: 18),
-              IconButton.filled(
-                iconSize: 40,
-                onPressed: (){
-                  Navigator.of(context).pop();
-                }, 
-                icon: const Icon(Icons.arrow_back),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 17),
+            child: AppText('Select station', fontSize: 40, canPop: true),
+          ),
+          SizedBox(height: 10),
+
+          // Search bar for stations
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: TextField(
+              onChanged: (value) {
+                updateStationsFromSearch(value);
+              },
+              style: TextStyle(
+                fontSize: 20,
+                fontFamily: 'Roboto',
               ),
-              AppText('Select station', fontSize: 40),
-            ],
+              decoration: InputDecoration(
+                
+                hintText: 'Search for a station',
+                hintStyle: TextStyle(
+                  fontSize: 20,
+                  fontFamily: 'Roboto',
+                ),
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
           ),
 
-          SizedBox(height: 40),
-
-          InkWell(
-            child: DestPlace("From:", 'Choose a station'),
-            onTap: () {
-              Navigator.of(context).pop();
-            },
-          ),
-
-          SizedBox(height: 20),
-          
-          InkWell(
-            child: DestPlace("to:", 'Choose a station'),
-            onTap: () {
-              // Navigator.of(context).pop();
-            },
+          // List of stations to choose from
+          Expanded(
+            // The Expanded widget allows the ListView to take up all remaining space
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: showingStations.length,
+              itemBuilder: (context, index) {
+                return InkWell(
+                  child: Card(
+                    child: ListTile(
+                      title: CommonTextApp(
+                        text: showingStations[index]['name'],
+                        fontSize: 20,
+                        isBold: true,
+                      ),
+                      subtitle: CommonTextApp(
+                        text: showingStations[index]['city'],
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop(showingStations[index]);
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
