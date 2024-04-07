@@ -148,6 +148,7 @@ class _SearchRouteState extends State<SearchRoute> {
                 ],
               ),
               InkWell(
+                borderRadius: BorderRadius.circular(20),
                 onTap: () => setState(() {
                   var temp = fromDest;
                   fromDest = toDest;
@@ -161,6 +162,7 @@ class _SearchRouteState extends State<SearchRoute> {
                 child: Icon(
                   Icons.swap_vert_sharp,
                   size: 40,
+                  color: Theme.of(context).primaryColor,
                 ),
               )
             ],

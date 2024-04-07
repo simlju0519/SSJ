@@ -175,7 +175,7 @@ class _ShowCaseStartEndMapState extends State<ShowCaseStartEndMap> {
 
     _polyline = Polyline(
       polylineId: PolylineId('path'),
-      color: Colors.purple,
+      color: Color.fromARGB(255, 103, 80, 164),
       width: 8,
       points: [
         LatLng(widget.start[0], widget.start[1]),
