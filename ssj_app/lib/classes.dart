@@ -94,6 +94,7 @@ class InfoContainer {
   Color secondaryColor = Colors.white;
   Color fontColor = Colors.white;
   Color accentColor = Colors.white;
+  Color fontColorAccent = Color.fromARGB(255, 33, 0, 93);
 
   void setWhiteTheme() {
     primaryColor = Colors.white;
@@ -240,3 +241,5 @@ class _ShowCaseStartEndMapState extends State<ShowCaseStartEndMap> {
     );
   }
 }
+
+

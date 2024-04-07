@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssj/home.dart';
+import 'package:ssj/loginPage.dart';
 
 
 // void main() => runApp(Main());
@@ -19,8 +20,9 @@ Future<void> main() async {
     key: mainKey,
     routes: {
       '/home': (context) => HomeTab(),
+      '/login': (context) => LoginPage(),
     },
-    initialRoute: '/home',
+    initialRoute: '/login',
     home: HomeTab(),
     navigatorObservers: [routeObserver],
   );
