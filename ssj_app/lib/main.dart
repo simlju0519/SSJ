@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssj/home.dart';
 import 'package:ssj/loginPage.dart';
-
+import 'package:flutter_config/flutter_config.dart';
 
 // void main() => runApp(Main());
 
@@ -16,13 +16,17 @@ Future<void> main() async {
     fontFamily: 'Roboto',
   );
 
+  WidgetsFlutterBinding.ensureInitialized(); // Required by FlutterConfig
+  await FlutterConfig.loadEnvVariables();
+  FlutterConfig.get('GOOGLE_MAPS_API_KEY');
+
   var mainApp = MaterialApp(
     key: mainKey,
     routes: {
       '/home': (context) => HomeTab(),
       '/login': (context) => LoginPage(),
     },
-    initialRoute: '/login',
+    initialRoute: '/home',
     home: HomeTab(),
     navigatorObservers: [routeObserver],
   );

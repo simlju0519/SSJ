@@ -22,6 +22,24 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+def loadEnv() {
+    def envFile = rootProject.file('devcontainer.env')
+    if (envFile.exists()) {
+        def env = [:]
+        envFile.readLines().forEach {
+            def (key, value) = it.split('=')
+            env[key] = value.trim() // Trim value to remove any trailing whitespace
+        }
+        println("Loaded environment variables: $env")
+        return env
+    } else {
+        println("devcontainer.env file not found.")
+        return [:]
+    }
+}
+
+def env = loadEnv()
+
 android {
     namespace "com.example.ssj_app"
     compileSdk flutter.compileSdkVersion
@@ -49,6 +67,11 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        manifestPlaceholders += [
+            GOOGLE_MAPS_API_KEY: "\"" + env['GOOGLE_MAPS_API_KEY'] + "\"",
+            // applicationName: "your.application.class.path" // Update this accordingly
+        ]
     }
 
     buildTypes {
