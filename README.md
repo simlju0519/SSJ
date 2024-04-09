@@ -1,7 +1,7 @@
 # SSJ - Sveriges Skit Järnvägar
 
 ## Introduction
-Welcome to the official repository for SSJ - Sveriges Skit Järnvägar, an innovative application system for booking train tickets in Sweden. This project is developed as part of the Database Systems course (DV1663), aiming to streamline the ticket booking process for users across both Android and iOS platforms.
+Welcome to the official repository for SSJ - Sveriges Skit Järnvägar, an innovative application system for booking train tickets in Sweden.
 
 ## Application Development
 
